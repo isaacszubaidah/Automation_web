@@ -14,6 +14,7 @@ public class WebPage {
 
     RemoteWebDriver driver;
     WebDriverWait wait;
+    static ConfigClass.AppConfig appConfig;
 
     @FindBy(css = "[placeholder='Username']")
     public WebElement usernameInput;
@@ -30,14 +31,15 @@ public class WebPage {
         this.driver = driver;
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
-
     @DataProvider(name = "invalid-login")
-    public static Object[][] invalidLogin(){
+    public static Object[][] invalidLogin() {
+        appConfig = ConfigClass.AppConfig.getInstance("sherlock.properties");
         return new Object[][]{
-                {"password","useremail"},
-                {"",""},
-                {"","password"},
-                {"standard_user",""}
+                {appConfig.getProperty("email"), ""},
+                {"", ""},
+                {"password",appConfig.getProperty("password")},
+                {"null", ""},
+                {"","password"}
         };
     }
 
