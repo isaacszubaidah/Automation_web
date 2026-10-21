@@ -1,3 +1,4 @@
+
 package login;
 
 import com.microsoft.playwright.Page;
@@ -13,7 +14,9 @@ public class WebPage {
 
     @DataProvider(name = "invalid-login")
     public static Object[][] invalidLogin() {
-        ConfigClass.AppConfig appConfig = ConfigClass.AppConfig.getInstance("sherlock.properties");
+        ConfigClass.AppConfig appConfig =
+                ConfigClass.AppConfig.getInstance("sherlock.properties");
+
         return new Object[][]{
                 {appConfig.getProperty("email"), ""},
                 {"", ""},
@@ -27,6 +30,7 @@ public class WebPage {
         page.locator("[placeholder='Username']").fill(username);
         page.locator("[placeholder='Password']").fill(password);
         page.locator("#login-button").click();
+
         return new ProductsPage(page);
     }
 

@@ -1,3 +1,4 @@
+
 package login;
 
 import com.microsoft.playwright.*;
@@ -9,10 +10,11 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
 public class BaseTest {
+
     protected static Playwright playwright;
     protected static Browser browser;
-    
-    // ThreadLocal manages isolated incognito contexts and tabs per test
+
+    // Isolated browser context and page for each test thread
     protected ThreadLocal<BrowserContext> context = new ThreadLocal<>();
     protected ThreadLocal<Page> page = new ThreadLocal<>();
 
@@ -20,28 +22,43 @@ public class BaseTest {
     @Parameters({"browserName"})
     public void suiteSetup(@Optional("chromium") String browserName) {
         playwright = Playwright.create();
-        
-        // Launch a single browser server process for the class
-        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(false);
-        if (browserName.equalsIgnoreCase("firefox")) {
-            browser = playwright.firefox().launch(options);
-        } else if (browserName.equalsIgnoreCase("webkit")) {
-            browser = playwright.webkit().launch(options);
-        } else {
-            browser = playwright.chromium().launch(options.setChannel("chrome"));
+
+        BrowserType.LaunchOptions options =
+                new BrowserType.LaunchOptions().setHeadless(true);
+
+        switch (browserName.toLowerCase()) {
+            case "firefox":
+                browser = playwright.firefox().launch(options);
+                break;
+
+            case "webkit":
+                browser = playwright.webkit().launch(options);
+                break;
+
+            case "chromium":
+            case "chrome":
+                browser = playwright.chromium()
+                        .launch(options.setChannel("chrome"));
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported browser: " + browserName
+                );
         }
     }
 
     @BeforeMethod
     @Parameters({"url"})
-    public void testSetup(@Optional("https://www.saucedemo.com/") String url) {
-        // Create an isolated incognito session for this specific test method
+    public void testSetup(
+            @Optional("https://www.saucedemo.com/") String url) {
+
         BrowserContext testContext = browser.newContext();
-        Page testPage = testContext.newPage();
-        
         context.set(testContext);
+
+        Page testPage = testContext.newPage();
         page.set(testPage);
-        
+
         getPage().navigate(url);
     }
 
@@ -51,10 +68,13 @@ public class BaseTest {
 
     @AfterMethod
     public void testTearDown() {
-        // Close the specific tab and isolated session cleanly
-        if (getPage() != null) {
-            getPage().close();
-            context.get().close();
+        try {
+            BrowserContext testContext = context.get();
+
+            if (testContext != null) {
+                testContext.close();
+            }
+        } finally {
             page.remove();
             context.remove();
         }
@@ -62,7 +82,12 @@ public class BaseTest {
 
     @AfterClass
     public void suiteTearDown() {
-        if (browser != null) browser.close();
-        if (playwright != null) playwright.close();
+        if (browser != null) {
+            browser.close();
+        }
+
+        if (playwright != null) {
+            playwright.close();
+        }
     }
 }
