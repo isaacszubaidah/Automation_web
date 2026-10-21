@@ -43,3 +43,4 @@ bin/
 build
 .gradle
 .idea
+src\test\resources\sherlock.properties
